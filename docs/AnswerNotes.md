@@ -1,13 +1,164 @@
-slice数组字符串 substring头尾 substr头长度 只字符串  
-splice只数组，可删，可插 
-slice 与 substring 功能一致  
-index，含头不含尾，忽略到末尾  
+# HTML
+
+## Node和Element的区别
+1.  `Node`  类型是**所有节点**类型的基础类型，包括元素节点、文本节点、注释节点等。
+		包括标签，也包括标签内的文本和注释
+2. 而  `Element`  类型则是**元素节点**的类型（不包括文本和注释节点），它继承自  `Node`  类型。
+		- 也就是可以写成标签的<div><p><img>...
+		- 元素节点可以拥有标签名tagName和属性attributes，文本和注释节点不能。
+3. `nodeName`、`nodeValue`、`parentNode`、`childNodes`、`appendChild()`等属于Node，而`tagName`、`classList`、`getAttribute()`这些仅元素才有的属性和方法属于Element
+
+```html
+<div  class="cont">
+	beforeText
+	<div  class="child1"></div>
+	<div  class="child2"></div>
+	afterText
+</div>
+```
+
+```js
+let  cont = document.querySelector('.cont')
+console.log(cont  instanceof  Element, cont  instanceof  Node) // true true
+console.log('childNodes', cont.childNodes) // 子node,5个
+console.log('children', cont.children) // 子元素，2个
+```
+
+----------------------------------
+
+# CSS
+
+## css权重
+  - important > 内联 > id > class | 属性 > 标签 > 相邻兄弟h1+p，子ul>li, 后代li a, 通配符*
+  - important最重，权重相同后出现的生效
+
+## 响应式布局方案
+1. rem + 设置根字体大小
+2. flex弹性盒子
+3. 百分比 或 vw,vh(vw未来趋势，目前兼容性不太好)
+4. 媒体查询设置宽度
+5. 三方库tailwinds bootstrap
+
+## css三角形
+长宽为0盒子一侧border，三侧透明
+## 左右定宽中不定
+ - float+margin留出左右，上下不行因为没高度。
+ - flex1：左右给定宽，中间flex：1
+## 图片下方有空隙
+img行内，底部对齐即可
+## 清除浮动
+  为什么要：浮动元素抽离文档流，会导致父元素高度坍缩。
+  1.容器中额外加一个空的子元素加属性clear:left/right/both
+  2.或用伪元素加属性clear:left/right/both，和1相同，好处是不用加一个冗余元素。
+  3.使父元素变成bfc(block formatting context块级格式上下文），一个独立渲染区域，内部样式不会影响外部。
+      - 加属性overflow:hidden 最常用
+      - 有浮动，absolute/fixed定位，flex的元素都是bfc元素
+行布局用flex就没有清除浮动的问题了。
+  
+
+## 1px问题
+  原因：似乎是移动端dpr(device pixcel ratio)不同，一逻辑像素等于多少个物理像素
+    也就是移动端设备对于小于1px兼容不同造成的
+  scale0.5
+
+## sass和scss
+sass无大括号，靠缩进
+scss有大括号，类似css
+    @extend,继承
+    @mixin，混入
+    都是复用手段，一个复制代码段到本类，一个把本类名加到继承的代码段逗号分割
+
+## ios元素点击有半透明灰色框：
+  a, button, input, textarea, div, span, i {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+## 怎么解决垂直margin合并
+父子：父bfc; 
+兄弟，其中一个设置float定位、绝对定位、inline-block(兄弟用bfc不行，因此overflow: hidden不行)
+都可：中间插入clear:both元素；设置flex, grid布局
+
+-----------------------------------
+
+# JS
+
+## 原型&原型链
+ - 基本原理记住：
+.prototype只有函数有，作为构造函数时挂公共函数用
+__proto__只有对象有，指向构造函数的.prototype属性。
+
+- 其他可以推导：
+Array.prototype === [].__proto__ // true
+
+## 如何让a == 1 && a == 2 && a == 3成立
+==在比较时，类型不同会做隐式类型转换
+===不会进行隐式类型转换，**先比较类型，后比较值**，只有类型相同，才会继续比较值，**如果类型不同, 直接返回false**
+解法：
+1. 重写toString方法，自增1
+2. 使用defineProperty在getter返回a++，每次取值自增1
+
+### 类似题目：如何让a == a && a == !a成立
+a为[]时，因为
+```js
+[] == ![] // true
+let a = []
+a == a && a == !a // true
+```
+
+---------------
+## apply, call作用及自己实现
+1. apply,call 都是临时改变函数中this指向后，并以此this指向执行一次函数。
+    - apply的入参是`非展开`的数组形式，如：fn.apply(this, arguments)
+    - call的入参是将数组`展开`形式，如:fn.call(this, ...arguments)
+2. bind是改变this指向，并返回一个永久改变了this指向的新函数。和apply,call的区别：
+   - 在调用bind时，这个函数没有执行，
+   - 这个返回的函数可以反复执行，this指向被永久改变。
+
+**这三个函数都是改变函数中this指向，如果函数中没有使用this关键字，则没有任何作用**
+
+### 实现
+1. apply
+```
+export function newApply (fn, newThis, arguments) {
+	newThis.fn = fn
+	let res = fn()
+	delete newThis.fn
+	return res
+}
+```
+思路是：利用在对象中的成员方法，其this指向为该对象，因此将函数放入newThis对象中，执行完毕，再将其删掉。
+
+--------------------------------
+## 判断对象是否存在某个属性的最佳实践
+用in
+```js
+function hasProperty(obj, key) {  
+	return key in obj;  
+}
+```
+其他方法各有缺陷
+```js
+return obj[key] // 如果obj.key值为null或undefined，会认为key不存在
+
+return obj[key] !== undefined; // 同理如果obj.key值正好为undefined,则会认为key不存在
+
+// 通过Object.keys()方法得到对象里所有属性形成的数组，然后使用includes方法判断该属性存不存在
+return  Object.keys(obj).includes(key); // 如果obj.key是不可枚举属性，则会认为key不存在
+
+return obj.hasOwnProperty(key); // 只能判断自身属性，不会沿着原型链查找
+```
+
+## 字符串、数组方法
+slice数组字、符串 
+带str的只字符串：substring头尾 substr头长度 
+slice 与 substring 功能一致 
+splice只数组，可删，可插
+ 
+index参数都是：含头不含尾，忽略到末尾  
 -----------------------
 
-
-------
-ajax  
-XMLHttpRequest, open, send, onreadystatechange 4, 200
+## ajax实现
+关键字：XMLHttpRequest, open, send, onreadystatechange 4, 200
 ```js
 let xhr = new XMLHttpRequest()
 xhr.onreadystatechange = function () {
@@ -21,24 +172,29 @@ xhr.open(method, url, async) // 默认true异步
 xhr.send(postData) // get时为空,参数为qs拼接在url上
 ```
 -------
+## promise和await、async
 promise链式调用解决回调地狱
+  - promise.all全部resolve才一起resolve,结果形成数组；用于需获得两个结果综合处理。
+  - promise.race第一个resolve就resolve,结果只是一个；可用于超时计时。
 await/async利用同步方式调用异步操作，利用generator实现
 
------
-基本数据类型primitive types：5 + 1 + 1
+----------
+## 基本数据类型个数：5 + 1 + 1
 null, undefined
 Number, String, Boolean
 Symbol(es6)
 BigInt(es10)
 引用数据类型reference type
-Object
+Object Array Function...
 
+### Symbol
 每次调用Symbol()生成一个唯一值
-BigInt Number的扩充，大于2^53-1的数，大数字后面加个n形成一个BigInt
+### BigInt 
+Number的扩充，大于2^53-1的数，大数字后面加个n形成一个BigInt
   let pageView = 9007199254740991n;
   console.log(typeof(pageView)); // 'bigint'
-----------
-instanceof与typeof区别及原理
+---------------
+## instanceof与typeof区别及原理
 typeof只能判断出基本数据类型和Object, 额外一个function, 
   Array及自定义对象类型判断不出
   原理是数据低三位是类型，000是对象，null因为是全零所以也返回Object。
@@ -46,14 +202,24 @@ instanceOf可判断具体对象类型，
   原理是沿着原型链obj.__proto__, obj.__proto__.__proto__ 是否有等于className.prototype的
   所以可判断子类型也可判断父类型。
 或者Object.prototype.toString.call([]) // '[object Array]'
--------------
-promise.all全部resolve才一起resolve,结果形成数组；用于需获得两个结果综合处理。
-promise.race第一个resolve就resolve,结果只是一个；可用于超时计时。
------
+------------------
+## 0.1 + 0.2 !== 0.3
 0.1和0.2转化成二进制是无限循环的小数，超出位数会进行截断，精度丢失，所以最终不等于0.3
 解决：先转化成整数计算后转回小数
------
-模块化
+
+--------------------------------------------
+
+## 闭包:
+ - 函数里返回函数形成闭包，
+ - 作用：形成私有变量，如传统类写法共有挂在this上，私有var,let通过成员函数访问。
+ - 缺点：容易占用大量内存。
+
+----------------------------------------
+## 科里化
+
+-----------------------------------------
+
+# 模块化
 1. 匿名立即执行函数iife
 2. `commonJs`，同步，服务器端node使用规范，require(), module.exports =, exports.xxx =, 浏览器需browserify/webpack转化后使用
 3. amd，异步，requireJs ，暴露xxx: define(function () {return xxx}),有依赖第一个参数传入一个依赖数组
@@ -71,17 +237,9 @@ define([depen1, depen2], function () {
     * 想要不同实例，导出类，引入后各依赖方自己new出实例
 
 6. umd:universal module通用，可识别commonJs、amd两种，都可引入
----------
 
-url输入后经历过程：
-1.查找url里域名对应的ip: 向dns服务器发送域名，dns服务器返回ip
-2.向该ip发送请求：三次握手建立tcp连接，发送http请求(method, url, httpvesion, request header, body)
-3.服务器返回http response(状态行，response header, body), body里是html正文
-4.浏览器加载并解析html（不需要加载结束，可同时加载同时渲染）, 遇到资源文件，则再发送http请求进行获取，如遇到图片，css，字体，异步请求，js资源会暂停解析再发送请求（async,defer除外，故js放在文档body标签底部）
-5.直到解析完毕。
--------
+--------------------------------------------
 
--------
 ## 重排(reflow)和重绘(repaint)
 
 改变元素位置大小，即会影响到其他元素位置时发生重排
@@ -209,7 +367,34 @@ img标签跨域获取的内容不能在canvas绘制(src显示图片可以)
   - 数据通过http post发送
 
 
-----------------
+---------------------------------------
+
+# 浏览器进程、线程与事件循环（有待商榷）
+
+### 浏览器的进程与线程
+chrome浏览器至少会开启四个进程：
+1. 浏览器主进程，
+2. GPU进程，
+3. 网络进程，
+4. 插件进程
+5. 渲染进程：每打开标签页都会开启一个新的渲染进程，负责页面显示、用户交互等我我们能看到的绝大多数工作在这里完成。V8引擎运行在该进程中。
+
+### 渲染进程
+ - GUI渲染线程，负责解析html，css，构建dom树，CSSOM树，渲染树和绘制页面
+ - JS引擎线程，一个tab页面只有一个该线程（单线程），负责解析与执行JS，
+		 它与GUI渲染进程不能同时运行，因此JS任务执行时间过长会阻塞渲染(看起来卡顿)。
+ - 计时器线程
+ - 异步http请求线程
+ - 事件触发线程
+-------------------------------------
+
+## url输入后经历过程：
+1.查找url里域名对应的ip: 向dns服务器发送域名，dns服务器返回ip
+2.向该ip发送请求：三次握手建立tcp连接，发送http请求(method, url, httpvesion, request header, body)
+3.服务器返回http response(状态行，response header, body), body里是html正文
+4.浏览器加载并解析html（不需要加载结束，可同时加载同时渲染）, 遇到资源文件，则再发送http请求进行获取，如遇到图片，css，字体，异步请求，js资源会暂停解析再发送请求（async,defer除外，故js放在文档body标签底部）
+5.直到解析完毕。
+
 ## 事件循环/Event Loop
 
 1. 事件触发，回调才会放入异步任务队列，不是注册了就放
@@ -229,15 +414,12 @@ img标签跨域获取的内容不能在canvas绘制(src显示图片可以)
 1. Promise
     * new Promise时传入的代码是同步，then/catch/finally才是异步
 
-闭包:函数里返回函数形成闭包，作用：形成私有变量，如传统类写法共有挂在this上，私有var,let通过成员函数访问。
-科里化
 
-apply,call,bind改变函数中this的指向，如函数没有使用this则无效果
-apply, call调用后立即执行改变了this的函数，区别在于传参是数组还是一个一个传func.apply(this, []); func.call(this, arg1, arg2,...)
-bind不立即执行，返回一个永久改变this指向的新函数
-----------
 
-# vue相关：
+
+------------------------------------
+
+# vue2：
 
 ## 响应式原理
 template 会被编译成render函数，函数执行的时候，访问什么变量，就出触发相应变量的get，然后才会添加watcher。
@@ -301,6 +483,14 @@ data改变后，其watch中update视图的回调没有立即执行，而是内�
     * 不传le，生成组件dom但在文档之外，需自己appendChild(componentInstance.$el)插入文档
     * $mount()编译template生成真实dom放在$el,不执行$mount()则$el为空
 
+### 作用域插槽是什么
+插槽的作用是可以让父组件调用子组件时，向子组件传递一块自定义内容，显示在子组件内部。
+但是这块内容虽然最终属于子组件，但是调用不了子组件中数据。
+作用域插槽就是可以把子组件中数据传递给父组件，父组件用一个变量接收，就可以在插槽模板中使用该变量。
+
+ - 总结：用于插槽中实现**父组件使用子组件值**，或**子组件向父组件传值**
+
+---------------------------------------
 
 # vue3:
 composition APIs入口是setup函数(或带setup属性的script标签)
@@ -328,9 +518,9 @@ cheetsheet:
  - 生命周期beforeCreate, created 被setup()函数取代
     * composition api生命周期前加on, onBeforeMount, onMounted
     * beforeDestroy被onBeforeUnmount
- - setup()函数需要return响应式变量，<script setup>语法糖省去
+ - setup()函数需要return模板使用的响应式变量，`<script setup>`语法糖省去return
 ----------------
-webpack相关：
+# webpack相关：
 可以处理es6,commonjs,amd等所有模块引入方式
 loader作用：加载及处理某种文件
 css-loader，使webpack能够处理引入样式文件如import css from './style.css'，将其转换为commonjs模块，返回样式字符串
@@ -346,19 +536,19 @@ webpack原理:
 
 -------------------
 
-## 安全：
+# 安全：
 
 ### sql注入：文本变指令，用户输入文本没有做过滤或转义，被作为sql指令一部分执行
 防范：过滤，转义；将sql语句预编译
 
 ------
 
-## 业务
+# 业务
 防抖：输入停止时才真正出发
 
 ------------
 
-## 后端/全栈
+# 后端/全栈
 
 ### 代理和反向代理
 代理：代理客户端，客户端通过一个跳板和服务器联络，服务器不知道客户端真实身份
@@ -369,51 +559,16 @@ webpack原理:
       也具有一定cache作用
 
 -------
-css权重：important > 内联 > id > class | 属性 > 标签 > 相邻兄弟h1+p，子ul>li, 后代li a, 通配符*
-  important最重，权重相同后出现的生效
-
-## 响应式布局方案：
-1. rem + 设置根字体大小
-2. flex弹性盒子
-3. 百分比 或 vw,vh(vw未来趋势，目前兼容性不太好)
-4. 媒体查询设置宽度
-5. 三方库tailwinds bootstrap
-
-css三角形：长宽为0盒子一侧border，三侧透明
-左右定宽中不定：float+margin留出左右，上下不行因为没高度。
-图片下方有空隙：img行内，底部对齐即可
-清除浮动：
-  为什么要：浮动元素抽离文档流，会导致父元素高度坍缩。
-  1.容器中额外加一个空的子元素加属性clear:left/right/both
-  2.或用伪元素加属性clear:left/right/both，和1相同，好处是不用加一个冗余元素。
-  3.使父元素变成bfc(block formatting context块级格式上下文），一个独立渲染区域，内部样式不会影响外部。
-      - 加属性overflow:hidden 最常用
-      - 有浮动，absolute/fixed定位，flex的元素都是bfc元素
-行布局用flex就没有清除浮动的问题了。
-  
-垂直margin合并：
-
-1px问题：
-  原因：似乎是移动端dpr(device pixcel ratio)不同，一逻辑像素等于多少个物理像素
-    也就是移动端设备对于小于1px兼容不同造成的
-  scale0.5
-
- sass有大括号，类似css, scss
-    @extend,继承
-    @mixin，混入
-    都是复用手段，一个复制代码段到本类，一个把本类名加到继承的代码段逗号分割
-
-ios元素点击有半透明灰色框：
-  a, button, input, textarea, div, span, i {
-    -webkit-tap-highlight-color: transparent;
-  }
 
 -------
-## 兼容性问题
+# 兼容性问题
  - 输入类：
 ios键盘弹起页面可视高度window.innerHeight不变，但页面发生滚动，可滚动最大区域为键盘弹起高度。
+ - 滚动类：
+ ios8以前滚动时scroll事件不派发，导致滚动时联动比如索引列表失效，吸顶使用position: sticky; 其他iscroll或betterscroll
+ ios8以后已经解决
 -------
-## 项目搭建与结构
+# 项目搭建与结构
  - 权限：
   页面级，路由守卫
   导航按钮级，自定义指令/v-if + 权限对象存放vuex
