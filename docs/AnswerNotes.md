@@ -118,7 +118,8 @@ a == a && a == !a // true
 
 ### 实现
 1. apply
-```
+思路：利用在对象中的成员方法，其this指向为该对象，因此将函数放入newThis对象中，执行完毕，再将其删掉。
+```js
 export function newApply (fn, newThis, arguments) {
 	newThis.fn = fn
 	let res = fn()
@@ -126,7 +127,22 @@ export function newApply (fn, newThis, arguments) {
 	return res
 }
 ```
-思路是：利用在对象中的成员方法，其this指向为该对象，因此将函数放入newThis对象中，执行完毕，再将其删掉。
+创建在函数原型上，使每个函数实例都可以调用，像原apply函数一样
+```js
+Function.prototype._apply = function (argThis, argArray = []) {
+    if (!argThis) {
+        argThis = window
+    }
+
+    argThis.fn = this
+    let res = argThis.fn(...argArray)
+
+    delete argThis.fn
+
+    return res
+}
+```
+
 
 --------------------------------
 ## 判断对象是否存在某个属性的最佳实践
@@ -483,10 +499,16 @@ data改变后，其watch中update视图的回调没有立即执行，而是内�
     * 不传le，生成组件dom但在文档之外，需自己appendChild(componentInstance.$el)插入文档
     * $mount()编译template生成真实dom放在$el,不执行$mount()则$el为空
 
+## render函数
+组件模板编译后会得到一个render函数，这个函数执行后返回组件vnode树。
+执行时机：render函数首次渲染会执行；在每次有数据改变时也都会执行。
+  （Vue3对此有优化，静态提升；blockTree等）
+
 ### 作用域插槽是什么
-插槽的作用是可以让父组件调用子组件时，向子组件传递一块自定义内容，显示在子组件内部。
+插槽的作用是可以让父组件调用子组件时，`向子组件传递`一块自定义内容，显示在子组件内部。
 但是这块内容虽然最终属于子组件，但是调用不了子组件中数据。
-作用域插槽就是可以把子组件中数据传递给父组件，父组件用一个变量接收，就可以在插槽模板中使用该变量。
+    > 因为组件的编译存在作用域，父组件的内容是在父组件作用域中编译，使用不了子组件属性。
+作用域插槽就是可以把`子组件中数据传递给父组件`，父组件用一个变量接收，就可以在插槽模板中使用该变量。
 
  - 总结：用于插槽中实现**父组件使用子组件值**，或**子组件向父组件传值**
 
@@ -519,6 +541,12 @@ cheetsheet:
     * composition api生命周期前加on, onBeforeMount, onMounted
     * beforeDestroy被onBeforeUnmount
  - setup()函数需要return模板使用的响应式变量，`<script setup>`语法糖省去return
+
+## Vue3相对于Vue2的优化
+编译上：
+ - 静态提升
+ - 
+ - blockTree
 ----------------
 # webpack相关：
 可以处理es6,commonjs,amd等所有模块引入方式
@@ -534,6 +562,14 @@ webpack原理:
 
   每一步都可以通过plugin改写生成物。
 
+## vue-cli
+vue-cli基于webpack:
+ 可以用
+ `chainWebpack`函数方式配置
+ `configureWebpack`对象方式配置
+# Vite相关
+vite是基于esbuild和rollup开发的，esbuild用于开发环境，rollup用于打包发布包。
+
 -------------------
 
 # 安全：
@@ -543,13 +579,19 @@ webpack原理:
 
 ------
 
+# 自动化测试
+单元测试：Jest
+
+--------
 # 业务
 防抖：输入停止时才真正出发
 
 ------------
 
 # 后端/全栈
-
+Node.js: Node.js提供了非浏览器端的javascript语言运行环境，和操作文件、数据库的api
+  用途：前端工程化工具，包括编译、打包、自动化等----用的最多的
+        服务器端：像其他后端语言一样，编写服务器端程序
 ### 代理和反向代理
 代理：代理客户端，客户端通过一个跳板和服务器联络，服务器不知道客户端真实身份
     用途: 隐藏身份, 绕墙，有一定cache作用
