@@ -232,7 +232,68 @@ instanceOf可判断具体对象类型，
 
 ----------------------------------------
 ## 科里化
+通过函数科里化可以将一个具有多个参数的函数转化为一系列只接受一个参数的函数，并返回新函数的链式调用形式。
 
+可以使函数更加灵活和模块化。
+
+实现思路：创建新函数，利用闭包和递归。
+
+一般有两种形式的题目，一是实现一个科里化的函数，二是实现一个将其他函数科里化的函数。
+
+ ### 实现一个科里化的函数
+例如，实现add函数，使
+add(1)(2)(3)()为6
+add(1, 2, 3)(4)()为10
+思路：创建新函数，利用闭包和递归。有参数则累加参数返回函数；无参数则返回累加结果。
+```js
+function  add (...arg) {
+	let  res = 0
+	function  loop (...args) {
+		if (args.length > 0) {
+			res += args.reduce((pre, cur) =>  pre + cur)
+			return  loop
+		} else {
+			return  res
+		}
+	}
+	return  loop(...arg)
+}
+console.log('add(1)(2)(3)()', add(1)(2)(3)())
+console.log('add(1)(2)(3)()', add(1,2,3)(4)())
+```
+
+> 函数形参`...args`，表示可以接受任意数量的参数，并将这些参数转换为一个数组。
+JavaScript中也可以使用`arguments`对象来实现类似功能。`arguments`对象是一个类数组对象，它包含了函数调用时传递的所有参数。
+但是，使用`...args`语法相对更加直观和易读，而且它返回的是一个真正的数组，提供了更多的数组方法和功能。因此，如果使用ES6及以上版本的JavaScript，推荐使用`...args`语法。
+
+### 实现一个将普通函数科里化的函数：
+```js
+/**
+* 接收一个函数，并返回一个新的科里化后的函数
+*/
+function  currying (func) {
+	let  args = [] // 利用闭包，存储每次带参调用的参数
+	return  function  loop (...args1) { // 需要命名，因为其他地方也需要返回这个函数
+		if (args1.length) { // 有参数，则为中间步骤，存储参数
+			args.push(...args1)
+			return  loop  // 返回该函数，供链式调用
+		} else {
+			return  func(...args) // 无参数，则为最终执行，返回原函数执行结果
+		}
+	}
+}
+// 被科里化的加和函数
+function  sum (...args) {
+	return  args.reduce((pre, cur) =>  pre + cur)
+}
+
+console.log('sum(1, 3, 4, 5, 6)', sum(1, 3, 4, 5, 6))
+console.log('curring(sum)(1)(3)(4, 5)(6)()', currying(sum)(1)(3)(4, 5)(6)())
+```
+
+
+## 深拷贝解决循环引用问题
+利用cache, 用weakMap
 -----------------------------------------
 
 # 模块化
@@ -254,6 +315,16 @@ define([depen1, depen2], function () {
 
 6. umd:universal module通用，可识别commonJs、amd两种，都可引入
 
+## import引入
+import有路径，按路径查找，例如`import './xxx'; import '/xxx';`
+import模块，无路径，在node_modules中查找该文件夹，
+  之后根据目录下package.json配置，寻找引入哪一个文件
+   - node环境，会引入main字段指向的文件，如果没有配置main，则寻找index.js，无此文件则报错
+   - 浏览器环境，先寻找browser字段，再寻找module字段，再没有则使用main字段
+      * browser为浏览器环境下入口
+      * modules为esm规范入口，node环境下无效
+      * node和浏览器环境均生效
+  如果没有package.json，或里面没有配置控制字段，则引入index.js
 --------------------------------------------
 
 ## 重排(reflow)和重绘(repaint)
