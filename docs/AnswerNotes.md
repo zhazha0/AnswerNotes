@@ -313,6 +313,9 @@ define([depen1, depen2], function () {
       所以导出的vuex对象，observable对象都是同一个实例
     * 想要不同实例，导出类，引入后各依赖方自己new出实例
 
+    存在`符号绑定`:效果时导出的基本类型数据，在模块外和模块内的修改会共享。
+      这与js的值类型赋值修改不会互相影响相反。
+
 6. umd:universal module通用，可识别commonJs、amd两种，都可引入
 
 ## import引入
