@@ -456,7 +456,9 @@ img标签跨域获取的内容不能在canvas绘制(src显示图片可以)
   页面关闭仍执行(xhr不行)，故不必延迟页面的跳转，用于离开页面时发送统计数据。
   - 数据通过http post发送
 
-
+### option请求
+OPTIONS请求主要用于CORS场景（跨域场景），帮助浏览器与服务器确认是否允许跨域请求。对于普通的同域请求，浏览器不会发出OPTIONS请求。
+所以跨域的post请求可能会带来成倍的options请求。
 ---------------------------------------
 
 # 浏览器进程、线程与事件循环（有待商榷）
@@ -545,8 +547,10 @@ keepalive标签，vue内置组件，动态组件里缓存组件实例和组件�
 
 ## 父子传值：
 0.props，emit
-1.父provide,任意级子inject(只能父传子孙，反之不行)，深层父子嵌套；要用data中属性，要使用返回对象的函数；要响应式，父provide传入对象
-  - 依赖注入(provide/inject)可看作`long range props`, 除了:
+1.provide&inject：
+  祖先provide：要用data中属性，要使用返回对象的函数；要响应式，父provide传入对象
+  子孙`inject: ['prop1', 'prop2']`：继承祖先提供的依赖(只能祖先传子孙，反之不行)；
+  - 依赖注入(provide/inject)可看作`long range props`, 避免props层层传递的繁琐，除了:
      1. 父不知道哪些子孙组件使用它provide的property
      2. 子孙组件不知道inject的property来自哪里
 2.$attrs, $listeners:解决深层嵌套层层传递的繁琐
